@@ -1,118 +1,103 @@
-type Operator = (args: number[]) => number;
-const add: Operator = ([a, b]: number[]) => a + b;
-const mul: Operator = ([a, b]: number[]) => a * b;
+const add = ([a, b]: number[]) => a + b;
+const mul = ([a, b]: number[]) => a * b;
 
 type Instruction = number | false;
+type Mode = number | undefined;
 
 export interface State {
   instructionType: Instruction;
   parameterModes: number[];
   rands: number[];
-  output: number;
+  output: number[];
 }
 
-interface Rators {
-  [key: number]: Operator;
-}
+export class Intcode {
+  private state: State;
+  private input: number;
+  private instructions: number[];
+  private curr: number;
+  private end: boolean;
+  private index: number;
+  private instructionMode: number | boolean;
 
-const rator = (code: number) => {
-  const rators: Rators = {
-    1: add,
-    2: mul
-  };
-  return rators[code];
-};
+  constructor(input: number, initialState?: State) {
+    this.curr = 0;
+    this.index = 0;
+    this.end = false;
+    this.input = input;
+    this.instructions = [];
+    this.instructionMode = 0;
+    if (initialState) this.state = initialState;
+    else
+      this.state = {
+        instructionType: false,
+        parameterModes: [],
+        rands: [],
+        output: []
+      };
+  }
 
-export const intcode = (state: State, input: number) => (
-  instructions: number[]
-) => {
-  for (let i = 0; i < instructions.length; i++) {
-    let instruction = instructions[i];
-    if (!state.instructionType) {
-      if (instruction === 99) break;
-      let { para, ins } = getParameterModes(instruction);
-      state.instructionType = ins;
-      state.parameterModes = para;
-    } else {
-      let mode = state.parameterModes.pop();
-      if ([3, 4].includes(state.instructionType)) {
-        if (state.instructionType === 3) {
-          instructions[instruction] = input;
-          state.instructionType = false;
-          state.parameterModes = [];
-          state.rands = [];
-        }
-        if (state.instructionType === 4) {
-          if (mode === 1) console.log(instruction);
-          else console.log(instructions[instruction]);
-          state.instructionType = false;
-          state.parameterModes = [];
-          state.rands = [];
-        }
-      } else {
-        if (state.rands.length === 2 && state.instructionType) {
-          instructions[instruction] = rator(state.instructionType)(state.rands);
-          state.rands = [];
-          state.instructionType = false;
-        } else {
-          if (mode === 0) {
-            state.rands.push(instructions[instruction]);
-          }
-          if (mode === 1) state.rands.push(instruction);
-        }
+  g(curr: number) {
+    const params = curr
+      .toString()
+      .padStart(5, '0')
+      .split('')
+      .map(v => parseInt(v));
+    const para = params.slice(0, 3);
+    const ins: Instruction = params.pop() || false;
+    return { para, ins };
+  }
+
+  run(is: number[]) {
+    let c = 0;
+    let instruction = 0;
+    let modes: number[];
+    const m = (c: number, m: number) => {
+      if (modes[m] === 0) return is[c];
+      else return c;
+    };
+
+    for (let i = 0; i < is.length; i++) {
+      instruction = is[c];
+      if (instruction == 99) return is;
+      let { para, ins } = this.g(instruction);
+      modes = para;
+      switch (ins) {
+        case 1:
+          is[is[c + 3]] = is[m(c + 1, 2)] + is[m(c + 2, 1)];
+          c += 4;
+          break;
+        case 2:
+          is[is[c + 3]] = is[m(c + 1, 2)] * is[m(c + 2, 1)];
+          c += 4;
+          break;
+        case 3:
+          is[is[c + 1]] = this.input;
+          c += 2;
+          break;
+        case 4:
+          this.state.output.push(is[m(c + 1, 2)]);
+          c += 2;
+          break;
+        case 5:
+          if (is[m(c + 1, 2)] !== 0) c = is[m(c + 2, 1)];
+          else c += 3;
+          break;
+        case 6:
+          if (is[m(c + 1, 2)] === 0) c = is[m(c + 2, 1)];
+          else c += 3;
+          break;
+        case 7:
+          if (is[m(c + 1, 2)] < is[m(c + 2, 1)]) is[is[c + 3]] = 1;
+          else is[is[c + 3]] = 0;
+          c += 4;
+          break;
+        case 8:
+          if (is[m(c + 1, 2)] === is[m(c + 2, 1)]) is[is[c + 3]] = 1;
+          else is[is[c + 3]] = 0;
+          c += 4;
+          break;
       }
     }
   }
-  return instructions;
-};
-
-export const getParameterModes = (instruction: number) => {
-  const params = instruction
-    .toString()
-    .padStart(5, '0')
-    .split('')
-    .map(v => parseInt(v));
-  const para = params.slice(0, 3);
-  const ins: Instruction = params.pop() || false;
-  return { para, ins };
-};
-
-// export const intcode = (input: number[]) => {
-//   let rator = null;
-//   let rands = [];
-//   let parameter_modes = [];
-//   for (let i = 0; i < input.length; i++) {
-//     let curr = input[i];
-//     if (rands.length === 2 && rator) {
-//       input[curr] = rator(rands);
-//       rator = null;
-//       rands = [];
-//     } else {
-//       switch (curr) {
-//         case 1:
-//           if (rator) rands.push(input[curr]);
-//           else {
-//             parameter_modes = [0, 0, 0];
-//             rator = add;
-//           }
-//           break;
-//         case 2:
-//           if (rator) rands.push(input[curr]);
-//           else {
-//             parameter_modes = [0, 0, 0];
-//             rator = mul;
-//           }
-//           break;
-//         case 99:
-//           if (rator) {
-//             rands.push(input[curr]);
-//             break;
-//           }
-//           return input;
-//         default:
-//           if (rator) rands.push(input[curr]);
-//       }
-//     }
-//   }
-//   return input;
-// };
+}
