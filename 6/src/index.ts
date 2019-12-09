@@ -4,15 +4,71 @@ interface Objects {
   [key: string]: string[];
 }
 
-export const fn = (input: string[]) => {
+const createObjectMap = (input: string[]) => {
   const objects: Objects = {};
   input.forEach(object => {
     const [obj, orbits] = object.split(")");
     if (!objects[obj]) objects[obj] = [orbits];
     else if (objects[obj]) objects[obj].push(orbits);
   });
+  return objects;
+};
+
+export const totalOrbits = (input: string[]) => {
+  const objects = createObjectMap(input);
   const tree = mapToTree("COM", objects, objects["COM"], null);
   return getTotalOrbits(tree, 0);
+};
+
+export const orbitalTransfers = (
+  input: string[],
+  start: string,
+  goal: string
+) => {
+  const objects: Objects = createObjectMap(input);
+  const tree = mapToTree("COM", objects, objects["COM"], null);
+  const you = dfs()(tree, "YOU");
+  const san = dfs()(tree, "SAN");
+};
+
+const findCommonAncestor = (start: Tree, goal: Tree) => {
+  const startAncestors: Tree[] = [];
+  const goalAncestors: Tree[] = [];
+  let ancestorFound = false;
+  const startStack: Tree[] = [];
+  const goalStack: Tree[] = [];
+  startStack.push(start);
+  goalStack.push(goal);
+
+  while (startStack.length > 0 || goalStack.length > 0) {
+    let startCurrent = startStack.pop();
+    let goalCurrent = goalStack.pop();
+  }
+};
+
+const dfs = () => {
+  const stack: Tree[] = [];
+  const visited: string[] = [];
+  return (tree: Tree, name: string): Tree | false => {
+    let match: Tree | false = false;
+    stack.push(tree);
+    while (stack.length > 0) {
+      let current = stack.pop();
+      if (!current) {
+        match = false;
+        break;
+      }
+      if (current.name === name) {
+        match = current;
+        break;
+      }
+      if (!visited.includes(current.name)) {
+        visited.push(current.name);
+        current.orbitals.forEach(orbital => stack.push(orbital));
+      }
+    }
+    return match;
+  };
 };
 
 const getTotalOrbits = (initialTree: Tree, initialCount: number) => {
