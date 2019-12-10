@@ -320,7 +320,7 @@ describe('Day 8', () => {
       expect(initialState.output[0]).toBe(1125899906842624);
     });
 
-    it('BOOST program', () => {
+    it.only('BOOST program', () => {
       const initialState: State = {
         instructionType: 0,
         rands: [],
@@ -328,7 +328,19 @@ describe('Day 8', () => {
         output: []
       };
       const program = new Intcode(1, initialState);
-      const result = program.run(BOOST);
+      const result = program.run(Array.from(BOOST));
+      expect(initialState.output[0]).toBe(2457252183);
+    });
+
+    it.only('BOOST program', () => {
+      const initialState: State = {
+        instructionType: 0,
+        rands: [],
+        parameterModes: [],
+        output: []
+      };
+      const program = new Intcode(2, initialState);
+      const result = program.run(Array.from(BOOST));
       console.log(initialState.output);
       console.log(result);
     });

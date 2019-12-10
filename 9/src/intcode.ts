@@ -45,10 +45,10 @@ export class Intcode {
     let modes: number[];
     let relativeBase = 0;
 
-    const m = (c: number, m: number) => {
+    const m = (c: number, m: number, d = false) => {
       if (modes[m] === 0) return is[c];
       if (modes[m] === 2) {
-        return relativeBase + is[c];
+        return is[relativeBase + c];
       }
       return c;
     };
