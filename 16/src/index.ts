@@ -10,6 +10,39 @@ export const fn = (input: string, phases: number = 1) => {
   return arrayToNumber(phase);
 };
 
+const amplifySignal = (input: string, amount: number) => {
+  const amplified: string[] = [];
+  for (let i = 0; i < amount; i++) {
+    amplified.push(input);
+  }
+
+  return amplified.join("");
+};
+
+export const part2 = (input: string, phases: number = 1) => {
+  input = amplifySignal(input, 10000);
+  let output: number[] = [];
+  let phase: number[] = [];
+  for (let i = 0; i < phases; i++) {
+    fasterNextPhase(input, output);
+    input = arrayToNumber(output);
+    phase = output;
+    output = [];
+  }
+  return arrayToNumber(phase);
+};
+
+const fasterNextPhase = (input: string, output: number[]) => {
+  let reversed = numberToArray(input).reverse();
+  output.push(reversed[0]);
+
+  for (let i = 1; i < reversed.length; i++) {
+    output[i] = (reversed[i] + output[i - 1]) % 10;
+  }
+
+  output = output.reverse();
+};
+
 const calculateNextPhase = (input: string, output: number[]) => {
   numberToArray(input).forEach((n, i, a) => {
     let pattern = createRepeatingPattern(i + 1);
